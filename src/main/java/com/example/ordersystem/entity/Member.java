@@ -31,7 +31,7 @@ public class Member {
     private String password;
 
     @Column(nullable = false)
-    private boolean active = true;
+    private Boolean active = true;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Order> orders = new ArrayList<>();

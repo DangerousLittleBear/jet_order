@@ -59,11 +59,11 @@ public class JwtUtil {
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
-        final String studentID = extractStudentID(token);
-        return (studentID.equals(userDetails.getUsername()) && !isTokenExpired(token));
+        final String email = extractEmail(token);
+        return (email.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
-    public String extractStudentID(String token) {
+    public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
@@ -89,7 +89,7 @@ public class JwtUtil {
     }
 
     public String getUserDataFromToken(String token) {
-        return extractStudentID(token);
+        return extractEmail(token);
     }
 
     public Authentication getAuthentication(String token) {

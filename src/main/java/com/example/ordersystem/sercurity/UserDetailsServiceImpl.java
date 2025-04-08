@@ -32,7 +32,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         return new UserDetailsImpl(
                 member.getId(),
-                member.getEmail()
+                member.getEmail(),
                 member.getPassword(),
                 member.getActive()
         );
