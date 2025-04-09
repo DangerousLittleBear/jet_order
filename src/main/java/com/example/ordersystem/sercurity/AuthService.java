@@ -56,8 +56,8 @@ public class AuthService {
     }
 
     public JwtResponse signup(SignupRequest signupRequest) {
-        if(isExistStudent(signupRequest)){
-
+        if(isExistMember(signupRequest)){
+            return new JwtResponse();
         }
 
 
@@ -102,7 +102,7 @@ public class AuthService {
         }
     }
 
-    public boolean isExistStudent(SignupRequest signupRequest) {
+    public boolean isExistMember(SignupRequest signupRequest) {
 
 
         return true;
