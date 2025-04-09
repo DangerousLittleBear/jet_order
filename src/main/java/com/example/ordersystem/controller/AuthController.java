@@ -7,6 +7,7 @@ import com.example.ordersystem.payload.response.JwtResponse;
 import com.example.ordersystem.sercurity.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,14 +19,14 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public JwtResponse login(LoginRequest loginRequest) {
+    public JwtResponse login(@RequestBody LoginRequest loginRequest) {
         JwtResponse JwtToken = authService.login(loginRequest);
         return JwtToken;
     }
 
 
     @PostMapping("/signup")
-    public JwtResponse signup(SignupRequest signupRequest) {
+    public JwtResponse signup(@RequestBody SignupRequest signupRequest) {
         JwtResponse JwtToken = authService.signup(signupRequest);
         return JwtToken;
     }
