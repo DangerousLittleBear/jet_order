@@ -33,4 +33,14 @@ public class Order {
 
     @OneToMany(mappedBy = "order" , cascade = CascadeType.ALL)
     private List<OrderItem> orderItems = new ArrayList<>();
+
+    public void changeOrderStatus(LocalDateTime orderChangedTime) {
+        if(this.orderStatus == 0){
+            this.orderStatus = 1;
+        }
+        else if(this.orderStatus == 1){
+            this.orderStatus = 0;
+        }
+        this.orderTime = orderChangedTime;
+    }
 }

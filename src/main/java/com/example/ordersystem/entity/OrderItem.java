@@ -28,4 +28,13 @@ public class OrderItem {
 
     @Column(nullable = false)
     private Integer quantity;
+
+    public void changeQuantity(Integer quantity) {
+        if(quantity > this.quantity) {
+            this.quantity = quantity;
+        }
+        else{
+            this.quantity = quantity;
+        }
+    }
 }
