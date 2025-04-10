@@ -28,8 +28,8 @@ public class MemberService {
 
     }
 
-    public Boolean isMemberValid(Member member) {
-        if(memberRepository.findActiveByEmail(member.getEmail())){
+    public Boolean isMemberValid(UUID memberId) {
+        if(memberRepository.findActiveById(memberId)){
             return true;
         }
         else{

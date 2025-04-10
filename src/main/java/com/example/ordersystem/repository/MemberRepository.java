@@ -14,4 +14,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
 
     Boolean findActiveByEmail(String email);
+
+    boolean findActiveById(UUID id);
 }

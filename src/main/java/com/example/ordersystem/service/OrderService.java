@@ -3,6 +3,7 @@ package com.example.ordersystem.service;
 import com.example.ordersystem.entity.Member;
 import com.example.ordersystem.entity.Order;
 import com.example.ordersystem.entity.OrderItem;
+import com.example.ordersystem.payload.request.OrderRequestDTO;
 import com.example.ordersystem.repository.MemberRepository;
 import com.example.ordersystem.repository.OrderItemRepository;
 import com.example.ordersystem.repository.OrderRepository;
@@ -25,14 +26,10 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
 
     @Transactional
-    public Order createOrder(Order orderRequest) {
-
-        orderRequest.setOrderTime(LocalDateTime.now());
+    public Order createOrder(UUID userID , OrderRequestDTO orderRequestData) {
 
         //1. 요청한 유저가 아이템을 구매할 수 있는 상황인지 확인해본다.
-        Member orderer = orderRequest.getMember();
-
-        Boolean ordererStatus = memberService.isMemberValid(orderer);
+        Boolean ordererStatus = memberService.isMemberValid(userID);
 
         if(ordererStatus == false){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "유저가 아이템을 구매할 수 있는 상태가 아닙니다. 운영자에게 문의하세요.");
@@ -43,10 +40,11 @@ public class OrderService {
         List<OrderItem> orderItems = orderRequest.getOrderItems();
 
         for (OrderItem orderItem : orderItems) {
-
+            orderItem
         }
 
         //3. 재고가 남아있다면 결제를 진행한다. (결제시스템)
+
 
 
         //4. 완료되면 고객에게 해당 요청에 대한 응답을 반환한다.
