@@ -7,12 +7,10 @@ import com.example.ordersystem.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/order")
@@ -32,6 +30,15 @@ public class OrderController {
         Order completedOrder =  orderService.createOrder(userDetails.getId() ,orderRequest);
 
         return completedOrder;
+    }
+
+    @GetMapping
+    public List<Order> getAllOrders() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        List<Order> allOrders = orderService.getAllOrders();
+        return allOrders;
     }
 
 }

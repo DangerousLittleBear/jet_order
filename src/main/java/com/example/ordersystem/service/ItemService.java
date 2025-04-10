@@ -6,6 +6,7 @@ import jakarta.annotation.security.PermitAll;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -61,6 +62,7 @@ public class ItemService {
         return item.getPrice() * quantity;
     }
 
+    @Transactional
     public void decreaseStock(UUID itemId , Integer quantity) {
         Item item = itemRepository.findById(itemId).orElse(null);
         if (item == null) {
@@ -68,6 +70,9 @@ public class ItemService {
         }
 
         item.setStock_quantity(item.getStock_quantity() - quantity);
+        if(item.getStock_quantity() < 0){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수량이 모두 소진되었습니다.");
+        }
         itemRepository.save(item);
 
     }

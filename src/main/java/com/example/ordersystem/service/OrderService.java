@@ -102,4 +102,7 @@ public class OrderService {
         return orderRepository.save(completedOrder);
     }
 
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
+    }
 }
