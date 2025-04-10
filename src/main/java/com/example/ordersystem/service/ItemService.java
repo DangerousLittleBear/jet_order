@@ -28,6 +28,16 @@ public class ItemService {
         return itemRepository.save(item);
     }
 
+    public Item getItem(UUID id) {
+        Item item = itemRepository.findById(id).orElse(null);
+
+        if (item == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+        return item;
+    }
+
+
     public Boolean isPurchaseAvailable(UUID itemId , Integer quantity) {
         Item item = itemRepository.findById(itemId).orElse(null);
 
@@ -49,6 +59,17 @@ public class ItemService {
         }
 
         return item.getPrice() * quantity;
+    }
+
+    public void decreaseStock(UUID itemId , Integer quantity) {
+        Item item = itemRepository.findById(itemId).orElse(null);
+        if (item == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND);
+        }
+
+        item.setStock_quantity(item.getStock_quantity() - quantity);
+        itemRepository.save(item);
+
     }
 
 }

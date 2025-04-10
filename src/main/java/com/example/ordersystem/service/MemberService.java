@@ -28,14 +28,19 @@ public class MemberService {
 
     }
 
-    public Boolean isMemberValid(UUID memberId) {
-        if(memberRepository.findActiveById(memberId)){
-            return true;
-        }
-        else{
-            return false;
-        }
+    public Member findMemberById(UUID id) {
+        return memberRepository.findById(id).orElse(null);
     }
+
+//    public Member isMemberValid(UUID memberId) {
+//
+//        Member member = memberRepository.findById(memberId).orElse(null);
+//
+//        if (member == null) {
+//            return null;
+//        }
+//        return member;
+//    }
 
 
     public boolean isExistMember(String email) {

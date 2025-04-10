@@ -29,7 +29,11 @@ public class Order {
     private LocalDateTime orderTime;
 
     @Column(nullable = false)
+    //1은 정상, 0은 취소
     private Integer orderStatus;
+
+    @Column(nullable = false)
+    private Integer totalPrice;
 
     @OneToMany(mappedBy = "order" , cascade = CascadeType.ALL)
     private List<OrderItem> orderItems = new ArrayList<>();
