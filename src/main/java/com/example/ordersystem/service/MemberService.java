@@ -7,6 +7,8 @@ import com.example.ordersystem.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class MemberService {
@@ -24,6 +26,15 @@ public class MemberService {
 
         return savedMember;
 
+    }
+
+    public Boolean isMemberValid(Member member) {
+        if(memberRepository.findActiveByEmail(member.getEmail())){
+            return true;
+        }
+        else{
+            return false;
+        }
     }
 
 
