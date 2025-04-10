@@ -1,16 +1,19 @@
 package com.example.ordersystem.sercurity;
 
+
 import com.example.ordersystem.entity.Member;
 import com.example.ordersystem.payload.request.LoginRequest;
 import com.example.ordersystem.payload.request.SignupRequest;
 import com.example.ordersystem.payload.response.JwtResponse;
 import com.example.ordersystem.repository.MemberRepository;
+import com.example.ordersystem.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -24,6 +27,8 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final MemberRepository memberRepository;
+    private final MemberService memberService;
+    private final PasswordEncoder passwordEncoder;
 
     public JwtResponse login(LoginRequest loginRequest) {
         // 인증 처리
@@ -39,7 +44,7 @@ public class AuthService {
         // JWT 토큰에 포함할 추가 정보
         Map<String, String> claims = new HashMap<>();
         claims.put("user_id", String.valueOf(member.getId()));
-        claims.put("email", member.getEmail());
+        claims.put("email", String.valueOf(userDetails.getUsername()));
 
         // Access Token과 Refresh Token 생성
         String accessToken = jwtUtil.generateAccessToken(userDetails, claims);
@@ -56,12 +61,22 @@ public class AuthService {
     }
 
     public JwtResponse signup(SignupRequest signupRequest) {
-        if(isExistMember(signupRequest)){
-            return new JwtResponse();
+        try{
+            if(memberService.isExistMember(signupRequest.getEmail())){
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 존재하는 이메일입니다.");
+            }
+
+            memberService.createMember(signupRequest, passwordEncoder.encode(signupRequest.getPassword()));
+
+            LoginRequest loginRequest = new LoginRequest(signupRequest.getEmail(), signupRequest.getPassword());
+
+            JwtResponse jwtResponse = login(loginRequest);
+
+            return jwtResponse;
         }
-
-
-        return new JwtResponse();
+        catch (Exception e){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "올바른 방법으로 이용해주세요.");
+        }
     }
 
     public JwtResponse refreshToken(String refreshToken) {
@@ -102,9 +117,5 @@ public class AuthService {
         }
     }
 
-    public boolean isExistMember(SignupRequest signupRequest) {
 
-
-        return true;
-    }
 }
