@@ -64,12 +64,10 @@ public class ItemService {
 
     @Transactional
     public void decreaseStock(UUID itemId, Integer quantity) {
+        // findByIdWithLock 대신 findById 사용
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        
-        // 비관적 락 적용 (Version 1.0)
-        item = itemRepository.findByIdWithLock(itemId);
-        
+
         item.setStock_quantity(item.getStock_quantity() - quantity);
         if(item.getStock_quantity() < 0) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수량이 모두 소진되었습니다.");

@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ordersystem-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: ordersystem
+    ports:
+      - "5506:3306"
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    command:
+      - --max_connections=100
+      - --innodb_buffer_pool_size=256M
+      - --innodb_log_file_size=64M
+      - --innodb_flush_log_at_trx_commit=2
+      - --innodb_flush_method=O_DIRECT
