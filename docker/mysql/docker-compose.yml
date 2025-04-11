@@ -7,10 +7,17 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: ordersystem
+      # Scouter Agent 환경 변수
+      SCOUTER_AGENT_ENABLED: "true"
+      SCOUTER_COLLECTOR_IP: host.docker.internal
+      SCOUTER_COLLECTOR_UDP_PORT: 6100
+      SCOUTER_COLLECTOR_TCP_PORT: 6100
     ports:
       - "5506:3306"
     volumes:
       - ./init:/docker-entrypoint-initdb.d
+      # Scouter Agent 볼륨 추가
+      - ./scouter-agent:/opt/scouter
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
@@ -34,3 +41,22 @@ services:
       - --innodb_log_file_size=64M
       - --innodb_flush_log_at_trx_commit=2
       - --innodb_flush_method=O_DIRECT
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Scouter Collector 서비스 추가
+  scouter-collector:
+    image: scouterapm/scouter-collector:2.17.1
+    container_name: scouter-collector
+    ports:
+      - "6100:6100/tcp"
+      - "6100:6100/udp"
+    volumes:
+      - ./scouter-data:/var/scouter
+    environment:
+      - JAVA_OPTS=-Xmx512m
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 1G

@@ -31,5 +31,5 @@ public class AuthController {
         return JwtToken;
     }
 
-    // 로그아웃은 일단 브라우저단에서 토큰값을 삭제하는 것으로 구현한다.
+
 }
