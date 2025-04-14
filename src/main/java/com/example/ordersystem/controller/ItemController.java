@@ -1,6 +1,7 @@
 package com.example.ordersystem.controller;
 
 import com.example.ordersystem.entity.Item;
+import com.example.ordersystem.payload.response.ItemDTO;
 import com.example.ordersystem.service.ItemService;
 import jakarta.annotation.security.PermitAll;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +19,8 @@ public class ItemController {
 
     @GetMapping
     @PreAuthorize("permitAll()")
-    public List<Item> getItems() {
-        List<Item> items = itemService.findAll();
+    public List<ItemDTO> getItems() {
+        List<ItemDTO> items = itemService.findAll();
         return items;
     }
 

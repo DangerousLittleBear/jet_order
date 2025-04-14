@@ -2,6 +2,7 @@ package com.example.ordersystem.config;
 
 import com.example.ordersystem.entity.Item;
 import com.example.ordersystem.repository.ItemRepository;
+import com.example.ordersystem.repository.OrderRepository;
 import com.example.ordersystem.service.ItemService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -17,10 +18,12 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
 
     private final ItemService itemService;
     private final ItemRepository itemRepository;
+    private final OrderRepository orderRepository;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
         // 삭제와 저장을 별도의 트랜잭션으로 분리
+        deleteAllOrders();
         deleteAllItems();
         saveExampleItems();
     }
@@ -29,6 +32,12 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
     public void deleteAllItems() {
         itemRepository.deleteAll();
         itemRepository.flush();
+    }
+
+    @Transactional
+    public void deleteAllOrders() {
+        orderRepository.deleteAll();
+        orderRepository.flush();
     }
 
     @Transactional

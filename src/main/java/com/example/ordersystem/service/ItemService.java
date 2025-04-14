@@ -1,6 +1,7 @@
 package com.example.ordersystem.service;
 
 import com.example.ordersystem.entity.Item;
+import com.example.ordersystem.payload.response.ItemDTO;
 import com.example.ordersystem.repository.ItemRepository;
 import jakarta.annotation.security.PermitAll;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +13,7 @@ import org.springframework.web.server.ResponseStatusException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -20,8 +22,11 @@ public class ItemService {
     private final ItemRepository itemRepository;
 
     @PermitAll
-    public List<Item> findAll() {
-        return itemRepository.findAll();
+    public List<ItemDTO> findAll() {
+        List<Item> items =  itemRepository.findAll();
+        return items.stream()
+                .map(ItemDTO::fromEntity)
+                .collect(Collectors.toList());
     }
 
 
