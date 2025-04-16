@@ -59,16 +59,16 @@ public class OrderService {
                 .collect(Collectors.summingInt(Integer::intValue));
 
         //3. 재고가 남아있다면 결제를 진행한다. (결제시스템)
-        try{
-            Boolean paymentStatus = paymentMockService.payment(totalPrice);
+       try{
+           Boolean paymentStatus = paymentMockService.payment(totalPrice);
 
-            if(paymentStatus == false){
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "결제 실패.");
-            }
-        }
-        catch (Exception e){
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "결제 중 오류가 발생하였습니다.");
-        }
+           if(paymentStatus == false){
+               throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "결제 실패.");
+           }
+       }
+       catch (Exception e){
+           throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "결제 중 오류가 발생하였습니다.");
+       }
 
         //4. 결제가 완료되면 해당 주문건을 데이터베이스에 등록하고 아이템의 수량을 업데이트한다.
 
