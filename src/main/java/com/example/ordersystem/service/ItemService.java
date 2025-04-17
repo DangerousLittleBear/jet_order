@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -29,6 +30,11 @@ public class ItemService {
                 .collect(Collectors.toList());
     }
 
+
+    public Map<UUID, Item> getItemsByIds(List<UUID> itemIds) {
+        List<Item> items =  itemRepository.findAllById(itemIds);
+        return items.stream().collect(Collectors.toMap(Item::getId, item -> item));
+    }
 
     public Item save(Item item) {
         return itemRepository.save(item);
