@@ -5,10 +5,8 @@ import com.example.ordersystem.entity.Member;
 import com.example.ordersystem.entity.Order;
 import com.example.ordersystem.entity.OrderItem;
 import com.example.ordersystem.payload.request.OrderRequestDTO;
-import com.example.ordersystem.payload.response.OrderResponseDTO;
 import com.example.ordersystem.repository.ItemRepository;
 import com.example.ordersystem.repository.MemberRepository;
-import com.example.ordersystem.repository.OrderItemRepository;
 import com.example.ordersystem.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,10 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,20 +24,21 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final MemberService memberService;
     private final ItemService itemService;
+    private final MemberRepository memberRepository;
     private final PaymentMockService paymentMockService;
     private final ItemRepository itemRepository;
 
     //Version 2. Working...
     /* Version 2  메이저 변경사항:
-            1.
+            1. 서비스 레이어에서 서비스 레이어를 직접 가져다쓰는 코드를 변경한다.
     */
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public Order createOrder(UUID userID , OrderRequestDTO orderRequestData) {
 
         //1. 요청한 유저가 아이템을 구매할 수 있는 상황인지 확인해본다.
-        Member requestMember = memberService.findMemberById(userID);
+        Member requestMember = memberRepository.findById(userID)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "해당 유저가 존재하지 않습니다."));
 
         Boolean ordererStatus =  requestMember.getActive();
 
@@ -56,11 +52,12 @@ public class OrderService {
                 .map(OrderRequestDTO.OrderItemDTO::getItemId)
                 .collect(Collectors.toList());
 
-        Map<UUID, Item> itemList = itemService.getItemsByIds(itemIds);
+        List<Item> itemList = itemRepository.findAllById(itemIds);
+        Map<UUID, Item> itemListMap = itemList.stream().collect(Collectors.toMap(Item::getId, item -> item));
 
         List<OrderRequestDTO.OrderItemDTO> availableItems = orderRequestData.getOrderItems().stream()
                 .filter(orderItem -> {
-                    Item item = itemList.get(orderItem.getItemId());
+                    Item item = itemListMap.get(orderItem.getItemId());
                     return item != null && item.getStock_quantity() >= orderItem.getQuantity();
                 })
                 .collect(Collectors.toList());
@@ -72,7 +69,7 @@ public class OrderService {
 
         Integer totalPrice = availableItems.stream()
                 .mapToInt(orderItem -> {
-                    Item item = itemList.get(orderItem.getItemId());
+                    Item item = itemListMap.get(orderItem.getItemId());
                     return item.getPrice() * orderItem.getQuantity();
                 })
                 .sum();

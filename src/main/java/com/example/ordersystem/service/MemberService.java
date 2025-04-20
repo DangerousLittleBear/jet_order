@@ -28,9 +28,6 @@ public class MemberService {
 
     }
 
-    public Member findMemberById(UUID id) {
-        return memberRepository.findById(id).orElse(null);
-    }
 
 //    public Member isMemberValid(UUID memberId) {
 //

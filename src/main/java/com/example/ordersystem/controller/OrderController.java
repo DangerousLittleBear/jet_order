@@ -35,14 +35,11 @@ public class OrderController {
     }
 
     @GetMapping
-    public List<OrderResponseDTO> getAllOrders() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-
+    public Integer getAllOrders() {
         List<Order> allOrders = orderService.getAllOrders();
-        return allOrders.stream()
-                .map(OrderResponseDTO::fromEntity)
-                .collect(Collectors.toList());
+
+        // Order의 개수를 반환
+        return allOrders.size();
     }
 
 }
