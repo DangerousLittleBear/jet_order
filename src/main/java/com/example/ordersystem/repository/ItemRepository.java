@@ -15,7 +15,7 @@ import java.util.UUID;
 @Repository
 public interface ItemRepository extends JpaRepository<Item, UUID> {
 
-//    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT i FROM Item i WHERE i.id = :id")
     Optional<Item> findByIdWithPessimisticLock(@Param("id") UUID id);
 

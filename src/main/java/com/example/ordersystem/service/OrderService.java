@@ -33,7 +33,6 @@ public class OrderService {
     /* Version 2  메이저 변경사항:
             1. 서비스 레이어에서 서비스 레이어를 직접 가져다쓰는 코드를 변경한다.
     */
-    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Order createOrder(UUID userID , OrderRequestDTO orderRequestData) {
 
         //1. 요청한 유저가 아이템을 구매할 수 있는 상황인지 확인해본다.
@@ -100,7 +99,7 @@ public class OrderService {
         
         for (OrderRequestDTO.OrderItemDTO dto : availableItems) {
             // 비관적 락으로 재고 감소
-            Item updatedItem = itemService.decreaseStockAndGetItem(dto.getItemId(), dto.getQuantity());
+            Item updatedItem = itemService.decreaseStockAtomically(dto.getItemId(), dto.getQuantity());
             
             // 감소된 재고 정보를 가진 아이템으로 주문 아이템 생성
             OrderItem orderItem = new OrderItem();

@@ -7,6 +7,7 @@ import jakarta.annotation.security.PermitAll;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -63,20 +64,6 @@ public class ItemService {
         }
         return true;
     }
-
-
-
-    public void decreaseStock(UUID itemId, Integer quantity) {
-        Item item = itemRepository.findByIdWithPessimisticLock(itemId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-
-        if(item.getStock_quantity() < quantity){
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수량이 모두 소진되었습니다.");
-        }
-
-        item.setStock_quantity(item.getStock_quantity() - quantity);
-    }
-
 
     public Item decreaseStockAndGetItem(UUID itemId, Integer quantity) {
         Item item = itemRepository.findByIdWithPessimisticLock(itemId)
