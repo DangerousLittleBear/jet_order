@@ -29,6 +29,11 @@ public class OrderController {
         return OrderResponseDTO.fromEntity(completedOrder);
     }
 
+    @PostMapping("/test")
+    public void testOrder(@RequestBody OrderRequestDTO orderRequest) {
+        this.orderService.test(orderRequest);
+    }
+
     @GetMapping
     public List<OrderResponseDTO> getAllOrders() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

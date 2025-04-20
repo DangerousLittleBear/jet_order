@@ -7,6 +7,7 @@ import jakarta.annotation.security.PermitAll;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -63,27 +64,52 @@ public class ItemService {
         return true;
     }
 
-    public Integer getTotalPrice(UUID itemId , Integer quantity) {
-        Item item = itemRepository.findById(itemId).orElse(null);
 
-        if (item == null) {
-            return 0;
+
+    public void decreaseStock(UUID itemId, Integer quantity) {
+        Item item = itemRepository.findByIdWithPessimisticLock(itemId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+
+        if(item.getStock_quantity() < quantity){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수량이 모두 소진되었습니다.");
         }
 
-        return item.getPrice() * quantity;
+        item.setStock_quantity(item.getStock_quantity() - quantity);
+    }
+
+
+    public Item decreaseStockAndGetItem(UUID itemId, Integer quantity) {
+        Item item = itemRepository.findByIdWithPessimisticLock(itemId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+        
+        if(item.getStock_quantity() < quantity) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "재고 부족");
+        }
+        
+        item.setStock_quantity(item.getStock_quantity() - quantity);
+        return item;
     }
 
     @Transactional
-    public void decreaseStock(UUID itemId, Integer quantity) {
-        // findByIdWithLock 대신 findById 사용
-        Item item = itemRepository.findById(itemId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+    public Item decreaseStockAtomically(UUID itemId, Integer quantity) {
+        // 단일 SQL로 재고 확인 및 감소
+        int updatedRows = itemRepository.decreaseStockAtomically(itemId, quantity);
 
-        item.setStock_quantity(item.getStock_quantity() - quantity);
-        if(item.getStock_quantity() < 0) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "수량이 모두 소진되었습니다.");
+        if (updatedRows == 0) {
+            // 업데이트된 행이 없으면 재고 부족 또는 아이템 없음
+            Item item = itemRepository.findById(itemId)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "상품을 찾을 수 없습니다."));
+
+            if (item.getStock_quantity() < quantity) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "재고 부족");
+            }
+
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "재고 업데이트 실패");
         }
-        itemRepository.save(item);
+
+        // 업데이트 성공 후 최신 상태 조회
+        return itemRepository.findById(itemId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
     }
 
 }

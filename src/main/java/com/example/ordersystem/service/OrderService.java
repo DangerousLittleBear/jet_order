@@ -5,16 +5,20 @@ import com.example.ordersystem.entity.Member;
 import com.example.ordersystem.entity.Order;
 import com.example.ordersystem.entity.OrderItem;
 import com.example.ordersystem.payload.request.OrderRequestDTO;
+import com.example.ordersystem.payload.response.OrderResponseDTO;
+import com.example.ordersystem.repository.ItemRepository;
 import com.example.ordersystem.repository.MemberRepository;
 import com.example.ordersystem.repository.OrderItemRepository;
 import com.example.ordersystem.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -26,19 +30,15 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final MemberService memberService;
-    private final OrderItemService orderItemService;
     private final ItemService itemService;
     private final PaymentMockService paymentMockService;
+    private final ItemRepository itemRepository;
 
-    //Version 1. Completed
-    /* Version 1 메이저 변경사항:
-            1. DTO를 사용하여 JSON 직렬화 과정에서 발생하던 순환참조 문제 해결
-            2. createOrder 메소드의 트랜잭션 단위를 수정하여 불필요하게 병목이 형성되지 않도록 설정
-            3. 중복 데이터베이스 조회 제거 (N + 1문제 해결, 아이템 재고조회와 총액 계산을 한번에 진행.)
-            4. 불필요한 중복 저장 작업 제거.
+    //Version 2. Working...
+    /* Version 2  메이저 변경사항:
+            1.
     */
-
-    @Transactional
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Order createOrder(UUID userID , OrderRequestDTO orderRequestData) {
 
         //1. 요청한 유저가 아이템을 구매할 수 있는 상황인지 확인해본다.
@@ -99,20 +99,20 @@ public class OrderService {
         order.setTotalPrice(totalPrice);
         order.setOrderStatus(1);
 
-        List<OrderItem> orderItems = availableItems.stream()
-                .map(dto -> {
-                    OrderItem orderItem = new OrderItem();
-
-                    Item item = itemService.getItem(dto.getItemId());
-                    itemService.decreaseStock(dto.getItemId(), dto.getQuantity());
-
-                    orderItem.setItem(item);
-                    orderItem.setQuantity(dto.getQuantity());
-                    orderItem.setOrder(order);
-                    return orderItem;
-                }).collect(Collectors.toList());
-
-
+        List<OrderItem> orderItems = new ArrayList<>();
+        
+        for (OrderRequestDTO.OrderItemDTO dto : availableItems) {
+            // 비관적 락으로 재고 감소
+            Item updatedItem = itemService.decreaseStockAndGetItem(dto.getItemId(), dto.getQuantity());
+            
+            // 감소된 재고 정보를 가진 아이템으로 주문 아이템 생성
+            OrderItem orderItem = new OrderItem();
+            orderItem.setItem(updatedItem);  // 업데이트된 아이템 사용
+            orderItem.setQuantity(dto.getQuantity());
+            orderItem.setOrder(order);
+            orderItems.add(orderItem);
+        }
+        
         order.setOrderItems(orderItems);
 
         Order completedOrder = orderRepository.save(order);
@@ -124,5 +124,20 @@ public class OrderService {
 
     public List<Order> getAllOrders() {
         return orderRepository.findAll();
+    }
+
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public void test(OrderRequestDTO orderRequest) {
+        orderRequest.getOrderItems().forEach(orderItem -> {
+            Item item = this.itemRepository.findById(orderItem.getItemId()).orElseThrow(() -> new RuntimeException("ㅋㅋㅋ"));
+            try {
+                if (item.getStock_quantity() >= orderItem.getQuantity()) {
+                    item.setStock_quantity(item.getStock_quantity() - orderItem.getQuantity());
+                }
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
+        });
     }
 }
