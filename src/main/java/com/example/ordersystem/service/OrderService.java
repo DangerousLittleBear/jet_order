@@ -29,10 +29,6 @@ public class OrderService {
     private final PaymentMockService paymentMockService;
     private final ItemRepository itemRepository;
 
-    //Version 2. Working...
-    /* Version 2  메이저 변경사항:
-            1. 서비스 레이어에서 서비스 레이어를 직접 가져다쓰는 코드를 변경한다.
-    */
     public Order createOrder(UUID userID , OrderRequestDTO orderRequestData) {
 
         //1. 요청한 유저가 아이템을 구매할 수 있는 상황인지 확인해본다.

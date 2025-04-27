@@ -43,6 +43,10 @@ dependencies {
 	//프로메테우스 의존성
 	implementation 'io.micrometer:micrometer-registry-prometheus'
 
+	//Redis 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'

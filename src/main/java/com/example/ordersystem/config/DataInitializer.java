@@ -5,11 +5,11 @@ import com.example.ordersystem.repository.ItemRepository;
 import com.example.ordersystem.repository.OrderRepository;
 import com.example.ordersystem.service.ItemService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 
 @Component
@@ -19,28 +19,27 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
     private final ItemService itemService;
     private final ItemRepository itemRepository;
     private final OrderRepository orderRepository;
-
+    private final RedisTemplate redisTemplate;
+    
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
         // 삭제와 저장을 별도의 트랜잭션으로 분리
         deleteAllOrders();
         deleteAllItems();
         saveExampleItems();
+        flushRedisData();
     }
 
-    @Transactional
     public void deleteAllItems() {
         itemRepository.deleteAll();
         itemRepository.flush();
     }
 
-    @Transactional
     public void deleteAllOrders() {
         orderRepository.deleteAll();
         orderRepository.flush();
     }
 
-    @Transactional
     public void saveExampleItems() {
         // 새로운 엔티티 생성
         Item mxKeys = new Item();
@@ -67,5 +66,10 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
         itemService.save(mxKeys);
         itemService.save(realforce);
         itemService.save(mxMaster);
+    }
+    
+    public void flushRedisData() {
+        RedisConnectionFactory connectionFactory = redisTemplate.getConnectionFactory();
+        connectionFactory.getConnection().flushDb();
     }
 }
