@@ -204,7 +204,7 @@ public class OrderService {
         for (OrderRequestDTO.OrderItemDTO dto : availableItems) {
             // 비관적 락으로 재고 감소
             Item updatedItem = itemService.decreaseStockAtomically(dto.getItemId(), dto.getQuantity());
-
+            redisService.decrementStockQuantityInRedis(dto.getItemId().toString(), dto.getQuantity());
             // 감소된 재고 정보를 가진 아이템으로 주문 아이템 생성
             OrderItem orderItem = new OrderItem();
             orderItem.setItem(updatedItem);  // 업데이트된 아이템 사용
