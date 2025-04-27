@@ -25,14 +25,10 @@ public class OrderController {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         
-        Order completedOrder = orderService.createOrder(userDetails.getId(), orderRequest);
+        Order completedOrder = orderService.createOrderV3(userDetails.getId(), orderRequest);
         return OrderResponseDTO.fromEntity(completedOrder);
     }
 
-    @PostMapping("/test")
-    public void testOrder(@RequestBody OrderRequestDTO orderRequest) {
-        this.orderService.test(orderRequest);
-    }
 
     @GetMapping
     public Integer getAllOrders() {

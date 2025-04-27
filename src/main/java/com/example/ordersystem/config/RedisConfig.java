@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
@@ -27,20 +28,19 @@ public class RedisConfig {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(redisConnectionFactory());
 
-        // Key/Value Serializer 설정
+        // Key는 String으로 직렬화
         template.setKeySerializer(new StringRedisSerializer());
-        template.setValueSerializer(new StringRedisSerializer());
-        
+
+        // Value는 Jackson2JsonRedisSerializer를 사용하여 다양한 타입 지원
+        template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
+
         // Hash Key/Value Serializer 설정
         template.setHashKeySerializer(new StringRedisSerializer());
-        template.setHashValueSerializer(new StringRedisSerializer());
-        
-        // 기본 Serializer 설정
-        template.setDefaultSerializer(new StringRedisSerializer());
-        
+        template.setHashValueSerializer(new GenericJackson2JsonRedisSerializer());
+
         // 설정 적용
         template.afterPropertiesSet();
-        
+
         return template;
     }
 }
