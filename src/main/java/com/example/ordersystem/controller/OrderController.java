@@ -24,10 +24,20 @@ public class OrderController {
     public OrderResponseDTO createOrder(@RequestBody OrderRequestDTO orderRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
-        
-        Order completedOrder = orderService.createOrderV3(userDetails.getId(), orderRequest);
+
+        Order completedOrder = orderService.createOrder(userDetails.getId(), orderRequest);
         return OrderResponseDTO.fromEntity(completedOrder);
     }
+
+    @PostMapping("/v3")
+    public Boolean createOrderV3(@RequestBody OrderRequestDTO orderRequest) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+        Boolean response = orderService.createOrderV3(userDetails.getId(), orderRequest);
+        return response;
+    }
+
 
 
     @GetMapping

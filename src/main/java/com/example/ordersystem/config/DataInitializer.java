@@ -46,20 +46,20 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
         mxKeys.setName("logitech mx keys");
         mxKeys.setDescription("로지텍의 사무용 펜타그래프 키보드입니다.");
         mxKeys.setPrice(159000);
-        mxKeys.setStock_quantity(70);
+        mxKeys.setStock_quantity(50000);
 
         Item realforce = new Item();
         realforce.setName("리얼포스 R3");
         realforce.setDescription("리얼포스 텐키리스 모델입니다.");
         realforce.setPrice(390000);
-        realforce.setStock_quantity(70);
+        realforce.setStock_quantity(50000);
 
 
         Item mxMaster = new Item();
         mxMaster.setName("Logitech mx master 3s");
         mxMaster.setDescription("로지텍의 사무용 마우스입니다.");
         mxMaster.setPrice(139000);
-        mxMaster.setStock_quantity(70);
+        mxMaster.setStock_quantity(50000);
 
 
         // 개별 저장
@@ -67,7 +67,8 @@ public class DataInitializer implements ApplicationListener<ContextRefreshedEven
         itemService.save(realforce);
         itemService.save(mxMaster);
     }
-    
+
+    // Redis에 저장된 내용도 초기화.
     public void flushRedisData() {
         RedisConnectionFactory connectionFactory = redisTemplate.getConnectionFactory();
         connectionFactory.getConnection().flushDb();

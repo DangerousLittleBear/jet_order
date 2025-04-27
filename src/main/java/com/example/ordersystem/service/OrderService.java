@@ -119,32 +119,25 @@ public class OrderService {
         return orderRepository.findAll();
     }
 
-    @Transactional(isolation = Isolation.SERIALIZABLE)
-    public void test(OrderRequestDTO orderRequest) {
-        orderRequest.getOrderItems().forEach(orderItem -> {
-            Item item = this.itemRepository.findById(orderItem.getItemId()).orElseThrow(() -> new RuntimeException("ㅋㅋㅋ"));
-            try {
-                if (item.getStock_quantity() >= orderItem.getQuantity()) {
-                    item.setStock_quantity(item.getStock_quantity() - orderItem.getQuantity());
-                }
-            } catch (Exception e) {
-                System.out.println(e.getMessage());
-                e.printStackTrace();
-            }
-        });
-    }
 
+
+    /* Versin 3 코드 ---------------------------------------------------------
+         변경사항
+         1. 레디스를 사용하여 재고감소 로직 수행.
+         2. Async를 사용하여 결제 기능을 비동기적으로 수행한다.
+         3. RabbitMQ를 사용하여 Redis에서 감소시킨 수량 데이터베이스에 실제 적용.
+     */
+
+    //버전 3에서부터는 Redis를 사용하여 재고감소 로직 속도를 증가시킨다.
     private final RedisService redisService;
 
-    public Order createOrderV3(UUID userID , OrderRequestDTO orderRequestData) {
+    public Boolean createOrderV3(UUID userID , OrderRequestDTO orderRequestData) {
 
         //1. 요청한 유저가 아이템을 구매할 수 있는 상황인지 확인해본다.
         Member requestMember = memberRepository.findById(userID)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "해당 유저가 존재하지 않습니다."));
 
-        Boolean ordererStatus =  requestMember.getActive();
-
-        if(ordererStatus == false){
+        if(requestMember.getActive() == false){
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "유저가 아이템을 구매할 수 있는 상태가 아닙니다. 운영자에게 문의하세요.");
         }
 
@@ -178,34 +171,32 @@ public class OrderService {
                 })
                 .sum();
 
+        Order order = new Order();
+        order.setId(UUID.randomUUID());
+        order.setOrderTime(LocalDateTime.now());
+        order.setMember(requestMember);
+        order.setTotalPrice(totalPrice);
+        order.setOrderStatus(1);
 
-        //3. 재고가 남아있다면 결제를 진행한다. (결제시스템)
+        //3. 버전 3부터는 결제 기능을 Async를 사용하여 수행한다. 실패하게되면 보상 트랜잭션을 수행해야한다.
         try{
-            Boolean paymentStatus = paymentMockService.payment(totalPrice);
-
-            if(paymentStatus == false){
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "결제 실패.");
-            }
+            paymentMockService.paymentAsync(totalPrice, availableItems, order);
         }
         catch (Exception e){
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "결제 중 오류가 발생하였습니다.");
         }
 
         //4. 결제가 완료되면 해당 주문건을 데이터베이스에 등록하고 아이템의 수량을 업데이트한다.
-
-        Order order = new Order();
-        order.setOrderTime(LocalDateTime.now());
-        order.setMember(requestMember);
-        order.setTotalPrice(totalPrice);
-        order.setOrderStatus(1);
-
         List<OrderItem> orderItems = new ArrayList<>();
 
         for (OrderRequestDTO.OrderItemDTO dto : availableItems) {
-            // 비관적 락으로 재고 감소
-            Item updatedItem = itemService.decreaseStockAtomically(dto.getItemId(), dto.getQuantity());
-            redisService.decrementStockQuantityInRedis(dto.getItemId().toString(), dto.getQuantity());
-            // 감소된 재고 정보를 가진 아이템으로 주문 아이템 생성
+            // 레디스에서 재고 감소.
+            Integer decreasedStock = redisService.decrementStockQuantityInRedis(dto.getItemId().toString(), dto.getQuantity());
+
+            // 감소된 재고 정보를 가진 아이템으로 주문 아이템 생성 -> 결제 시스템으로 넘겨야 할 것 같다.
+            Item updatedItem = itemService.getItem(dto.getItemId());
+            updatedItem.setStock_quantity(decreasedStock);
+
             OrderItem orderItem = new OrderItem();
             orderItem.setItem(updatedItem);  // 업데이트된 아이템 사용
             orderItem.setQuantity(dto.getQuantity());
@@ -214,13 +205,27 @@ public class OrderService {
         }
 
         order.setOrderItems(orderItems);
-
+//
         Order completedOrder = orderRepository.save(order);
 
         //5. 완료되면 고객에게 해당 요청에 대한 응답을 반환한다.
 
-        return completedOrder;
+        return true;
     }
 
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public void test(OrderRequestDTO orderRequest) {
+        orderRequest.getOrderItems().forEach(orderItem -> {
+            Item item = this.itemRepository.findById(orderItem.getItemId()).orElseThrow(() -> new RuntimeException("ㅋㅋㅋ"));
+            try {
+                if (item.getStock_quantity() >= orderItem.getQuantity()) {
+                    item.setStock_quantity(item.getStock_quantity() - orderItem.getQuantity());
+                }
+            } catch (Exception e) {
+                System.out.println(e.getMessage());
+                e.printStackTrace();
+            }
+        });
+    }
 
 }

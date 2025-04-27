@@ -5,6 +5,7 @@ import com.example.ordersystem.payload.response.ItemDTO;
 import com.example.ordersystem.repository.ItemRepository;
 import jakarta.annotation.security.PermitAll;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.annotation.ReadOnlyProperty;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -42,6 +43,7 @@ public class ItemService {
         return itemRepository.save(item);
     }
 
+    @ReadOnlyProperty
     public Item getItem(UUID id) {
         Item item = itemRepository.findById(id).orElse(null);
 

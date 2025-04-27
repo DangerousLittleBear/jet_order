@@ -30,12 +30,12 @@ public class OrderResponseDTO {
         dto.setOrderTime(order.getOrderTime());
         dto.setOrderStatus(order.getOrderStatus());
         dto.setTotalPrice(order.getTotalPrice());
-        
+
         // OrderItem 변환
         dto.setOrderItems(order.getOrderItems().stream()
             .map(OrderItemDTO::fromEntity)
             .collect(Collectors.toList()));
-        
+
         return dto;
     }
     

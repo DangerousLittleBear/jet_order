@@ -22,8 +22,12 @@ public class RedisService {
         return (String) redisTemplate.opsForValue().get(key);
     }
 
+    public void incrementStockQuantityInRedis(String key, Integer quantity) {
+        redisTemplate.opsForValue().increment(key, quantity);
+    }
 
-    public void decrementStockQuantityInRedis(String key, Integer quantity) {
+
+    public Integer decrementStockQuantityInRedis(String key, Integer quantity) {
         String script =
                 "local currentStock = redis.call('GET', KEYS[1])\n" +
                         "if currentStock == false then\n" +
@@ -42,11 +46,11 @@ public class RedisService {
         redisScript.setScriptText(script);
         redisScript.setResultType(Long.class);
 
-        Long result = redisTemplate.execute(
+        Integer result = Math.toIntExact(redisTemplate.execute(
                 redisScript,
                 Collections.singletonList(key),
                 quantity.toString()
-        );
+        ));
 
         if (result == null) {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Redis 작업 실패");
@@ -59,6 +63,8 @@ public class RedisService {
         if (result == -2) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "재고가 부족합니다.");
         }
+
+        return result;
     }
 
 }
