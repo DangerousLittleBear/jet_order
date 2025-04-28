@@ -115,12 +115,6 @@ public class OrderService {
         return completedOrder;
     }
 
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
-    }
-
-
-
     /* Versin 3 코드 ---------------------------------------------------------
          변경사항
          1. 레디스를 사용하여 재고감소 로직 수행.
@@ -131,7 +125,7 @@ public class OrderService {
     //버전 3에서부터는 Redis를 사용하여 재고감소 로직 속도를 증가시킨다.
     private final RedisService redisService;
 
-    public Boolean createOrderV3(UUID userID , OrderRequestDTO orderRequestData) {
+    public Order createOrderV3(UUID userID , OrderRequestDTO orderRequestData) {
 
         //1. 요청한 유저가 아이템을 구매할 수 있는 상황인지 확인해본다.
         Member requestMember = memberRepository.findById(userID)
@@ -172,7 +166,6 @@ public class OrderService {
                 .sum();
 
         Order order = new Order();
-        order.setId(UUID.randomUUID());
         order.setOrderTime(LocalDateTime.now());
         order.setMember(requestMember);
         order.setTotalPrice(totalPrice);
@@ -194,29 +187,28 @@ public class OrderService {
             Integer decreasedStock = redisService.decrementStockQuantityInRedis(dto.getItemId().toString(), dto.getQuantity());
 
             // 감소된 재고 정보를 가진 아이템으로 주문 아이템 생성 -> 결제 시스템으로 넘겨야 할 것 같다.
-            Item updatedItem = itemService.getItem(dto.getItemId());
-            updatedItem.setStock_quantity(decreasedStock);
+            // 2. itemListMap에서 아이템을 가져와서 새로운 객체 생성
+            Item updatedItem = itemListMap.get(dto.getItemId());
 
             OrderItem orderItem = new OrderItem();
-            orderItem.setItem(updatedItem);  // 업데이트된 아이템 사용
+            orderItem.setItem(updatedItem);
             orderItem.setQuantity(dto.getQuantity());
             orderItem.setOrder(order);
             orderItems.add(orderItem);
         }
 
         order.setOrderItems(orderItems);
-//
         Order completedOrder = orderRepository.save(order);
 
         //5. 완료되면 고객에게 해당 요청에 대한 응답을 반환한다.
 
-        return true;
+        return completedOrder;
     }
 
     @Transactional(isolation = Isolation.SERIALIZABLE)
     public void test(OrderRequestDTO orderRequest) {
         orderRequest.getOrderItems().forEach(orderItem -> {
-            Item item = this.itemRepository.findById(orderItem.getItemId()).orElseThrow(() -> new RuntimeException("ㅋㅋㅋ"));
+            Item item = this.itemRepository.findById(orderItem.getItemId()).orElseThrow(() -> new RuntimeException(""));
             try {
                 if (item.getStock_quantity() >= orderItem.getQuantity()) {
                     item.setStock_quantity(item.getStock_quantity() - orderItem.getQuantity());
@@ -226,6 +218,10 @@ public class OrderService {
                 e.printStackTrace();
             }
         });
+    }
+
+    public List<Order> getAllOrders() {
+        return orderRepository.findAll();
     }
 
 }

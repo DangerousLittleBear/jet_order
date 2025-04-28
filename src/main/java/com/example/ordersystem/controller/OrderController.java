@@ -20,6 +20,7 @@ public class OrderController {
 
     private final OrderService orderService;
 
+    //버전 1~2
     @PostMapping
     public OrderResponseDTO createOrder(@RequestBody OrderRequestDTO orderRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -29,15 +30,15 @@ public class OrderController {
         return OrderResponseDTO.fromEntity(completedOrder);
     }
 
+    // 버전3
     @PostMapping("/v3")
-    public Boolean createOrderV3(@RequestBody OrderRequestDTO orderRequest) {
+    public OrderResponseDTO createOrderV3(@RequestBody OrderRequestDTO orderRequest) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        Boolean response = orderService.createOrderV3(userDetails.getId(), orderRequest);
-        return response;
+        Order response = orderService.createOrderV3(userDetails.getId(), orderRequest);
+        return OrderResponseDTO.fromEntity(response);
     }
-
 
 
     @GetMapping

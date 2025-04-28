@@ -16,11 +16,26 @@ public class AsyncConfig implements AsyncConfigurer {
     @Bean(name = "paymentExecutor")
     public Executor getAsyncExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        int processors = Runtime.getRuntime().availableProcessors();
 
-        executor.setCorePoolSize(100);        // 기본 스레드 수
-        executor.setMaxPoolSize(1000);         // 최대 스레드 수
-        executor.setQueueCapacity(2000);      // 대기 큐 크기
+        executor.setCorePoolSize(processors * 4);
+        executor.setMaxPoolSize(processors * 8);
+        executor.setQueueCapacity(10000);      
         executor.setThreadNamePrefix("AsyncExecutor-");
+        executor.initialize();
+
+        return executor;
+    }
+
+    @Bean(name = "dbSyncExecutor")
+    public Executor getDbSyncExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        int processors = Runtime.getRuntime().availableProcessors();
+
+        executor.setCorePoolSize(processors * 4);
+        executor.setMaxPoolSize(processors * 8);
+        executor.setQueueCapacity(10000);
+        executor.setThreadNamePrefix("DbSyncExecutor-");
         executor.initialize();
 
         return executor;

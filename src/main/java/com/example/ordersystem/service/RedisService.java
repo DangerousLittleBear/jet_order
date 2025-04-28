@@ -13,6 +13,7 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class RedisService {
     private final RedisTemplate<String, Object> redisTemplate;
+    private final DBsynchronizeService dbsyncronizeService;
 
     public void setStockQuantityInRedis(String key, Integer value) {
         redisTemplate.opsForValue().setIfAbsent(key, value.toString());
@@ -63,6 +64,9 @@ public class RedisService {
         if (result == -2) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "재고가 부족합니다.");
         }
+
+
+        dbsyncronizeService.synchronizeDB(key , quantity);
 
         return result;
     }
